@@ -90,3 +90,16 @@ CREATE TABLE IF NOT EXISTS book_notes (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
 );
+
+CREATE TABLE "public"."votes" (
+                                  "user_id" int8 NOT NULL,
+                                  "entry_id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                  "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                  CONSTRAINT "votes_pkey" PRIMARY KEY ("user_id", "entry_id"),
+                                  CONSTRAINT "votes_entry_id_fkey" FOREIGN KEY ("entry_id") REFERENCES "public"."diary_entries" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
+                                  CONSTRAINT "votes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+)
+;
+
+ALTER TABLE "public"."votes"
+    OWNER TO "postgres";
