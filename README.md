@@ -7,8 +7,11 @@
 text
 编辑
 Diary/
+
 ├── backend/          # Java 后端（Spring Boot）
+
 └── frontend/         # 前端（Vue + TypeScript + Vite）
+
 ⚙️ 快速启动指南
 1️⃣ 启动前端
 进入前端目录，安装依赖并启动开发服务器：
