@@ -1,95 +1,135 @@
-CREATE TABLE IF NOT EXISTS users (
-    id BIGSERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    name VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE DATABASE diary_db;
+USE diary_db;
 
-CREATE TABLE IF NOT EXISTS diary_entries (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    title VARCHAR(255),
-    content TEXT,
-    date DATE,
-    tags TEXT[],
-    mood VARCHAR(50),
-    privacy VARCHAR(20),
-    is_story BOOLEAN DEFAULT FALSE,
-    deleted BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+CREATE TABLE "public"."book_notes" (
+                                       "id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                       "user_id" int8 NOT NULL,
+                                       "book_id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                       "cfi_range" text COLLATE "pg_catalog"."default" NOT NULL,
+                                       "content" text COLLATE "pg_catalog"."default",
+                                       "color" varchar(50) COLLATE "pg_catalog"."default",
+                                       "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                       CONSTRAINT "book_notes_pkey" PRIMARY KEY ("id"),
+                                       CONSTRAINT "book_notes_book_id_fkey" FOREIGN KEY ("book_id") REFERENCES "public"."books" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                                       CONSTRAINT "book_notes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+)
+;
 
-CREATE TABLE IF NOT EXISTS likes (
-    user_id BIGINT NOT NULL,
-    entry_id VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, entry_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (entry_id) REFERENCES diary_entries(id)
-);
+ALTER TABLE "public"."book_notes"
+    OWNER TO "postgres";
 
-CREATE TABLE IF NOT EXISTS votes (
-    user_id BIGINT NOT NULL,
-    entry_id VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, entry_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (entry_id) REFERENCES diary_entries(id)
-);
+CREATE TABLE "public"."books" (
+                                  "id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                  "user_id" int8 NOT NULL,
+                                  "title" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                  "author" varchar(255) COLLATE "pg_catalog"."default",
+                                  "cover_image" text COLLATE "pg_catalog"."default",
+                                  "file_data" bytea,
+                                  "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                  "last_read_at" timestamp(6),
+                                  "progress" varchar(255) COLLATE "pg_catalog"."default",
+                                  "format" varchar(10) COLLATE "pg_catalog"."default" DEFAULT 'epub'::character varying,
+                                  CONSTRAINT "books_pkey" PRIMARY KEY ("id"),
+                                  CONSTRAINT "books_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+)
+;
 
-CREATE TABLE IF NOT EXISTS comments (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    entry_id VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (entry_id) REFERENCES diary_entries(id)
-);
+ALTER TABLE "public"."books"
+    OWNER TO "postgres";
 
-ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id BIGINT;
-ALTER TABLE comments DROP CONSTRAINT IF EXISTS fk_comments_parent;
-ALTER TABLE comments ADD CONSTRAINT fk_comments_parent FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE;
+CREATE TABLE "public"."comments" (
+                                     "id" int8 NOT NULL DEFAULT nextval('comments_id_seq'::regclass),
+                                     "user_id" int8 NOT NULL,
+                                     "entry_id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                     "content" text COLLATE "pg_catalog"."default" NOT NULL,
+                                     "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                     "parent_id" int8,
+                                     CONSTRAINT "comments_pkey" PRIMARY KEY ("id"),
+                                     CONSTRAINT "comments_entry_id_fkey" FOREIGN KEY ("entry_id") REFERENCES "public"."diary_entries" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
+                                     CONSTRAINT "comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
+                                     CONSTRAINT "fk_comments_parent" FOREIGN KEY ("parent_id") REFERENCES "public"."comments" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+)
+;
 
-CREATE TABLE IF NOT EXISTS folders (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+ALTER TABLE "public"."comments"
+    OWNER TO "postgres";
 
-ALTER TABLE diary_entries ADD COLUMN IF NOT EXISTS folder_id VARCHAR(255);
-ALTER TABLE diary_entries DROP CONSTRAINT IF EXISTS fk_diary_entries_folder;
-ALTER TABLE diary_entries ADD CONSTRAINT fk_diary_entries_folder FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL;
+CREATE TABLE "public"."diary_entries" (
+                                          "id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                          "user_id" int8 NOT NULL,
+                                          "title" varchar(255) COLLATE "pg_catalog"."default",
+                                          "content" text COLLATE "pg_catalog"."default",
+                                          "date" date,
+                                          "tags" text[] COLLATE "pg_catalog"."default",
+                                          "mood" varchar(50) COLLATE "pg_catalog"."default",
+                                          "privacy" varchar(20) COLLATE "pg_catalog"."default",
+                                          "deleted" bool DEFAULT false,
+                                          "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                          "updated_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                          "is_story" bool,
+                                          "folder_id" varchar(255) COLLATE "pg_catalog"."default",
+                                          CONSTRAINT "diary_entries_pkey" PRIMARY KEY ("id"),
+                                          CONSTRAINT "diary_entries_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
+                                          CONSTRAINT "fk_diary_entries_folder" FOREIGN KEY ("folder_id") REFERENCES "public"."folders" ("id") ON DELETE SET NULL ON UPDATE NO ACTION
+)
+;
 
-CREATE TABLE IF NOT EXISTS books (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    author VARCHAR(255),
-    cover_image TEXT,
-    file_data BYTEA,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_read_at TIMESTAMP,
-    progress VARCHAR(255),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+ALTER TABLE "public"."diary_entries"
+    OWNER TO "postgres";
 
-CREATE TABLE IF NOT EXISTS book_notes (
-    id VARCHAR(255) PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    book_id VARCHAR(255) NOT NULL,
-    cfi_range TEXT NOT NULL,
-    content TEXT,
-    color VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
-);
+CREATE TABLE "public"."folders" (
+                                    "id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                    "user_id" int8 NOT NULL,
+                                    "name" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                    "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                    CONSTRAINT "folders_pkey" PRIMARY KEY ("id"),
+                                    CONSTRAINT "folders_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+)
+;
+
+ALTER TABLE "public"."folders"
+    OWNER TO "postgres";
+
+CREATE TABLE "public"."likes" (
+                                  "user_id" int8 NOT NULL,
+                                  "entry_id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                  "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                  CONSTRAINT "likes_pkey" PRIMARY KEY ("user_id", "entry_id"),
+                                  CONSTRAINT "likes_entry_id_fkey" FOREIGN KEY ("entry_id") REFERENCES "public"."diary_entries" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
+                                  CONSTRAINT "likes_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+)
+;
+
+ALTER TABLE "public"."likes"
+    OWNER TO "postgres";
+
+CREATE TABLE "public"."mindmaps" (
+                                     "id" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                     "user_id" int8 NOT NULL,
+                                     "title" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                     "content" text COLLATE "pg_catalog"."default",
+                                     "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                     "updated_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                     CONSTRAINT "mindmaps_pkey" PRIMARY KEY ("id")
+)
+;
+
+ALTER TABLE "public"."mindmaps"
+    OWNER TO "postgres";
+
+CREATE TABLE "public"."users" (
+                                  "id" int8 NOT NULL DEFAULT nextval('users_id_seq'::regclass),
+                                  "email" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                  "password" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
+                                  "name" varchar(255) COLLATE "pg_catalog"."default",
+                                  "created_at" timestamp(6) DEFAULT CURRENT_TIMESTAMP,
+                                  CONSTRAINT "users_pkey" PRIMARY KEY ("id"),
+                                  CONSTRAINT "users_email_key" UNIQUE ("email")
+)
+;
+
+ALTER TABLE "public"."users"
+    OWNER TO "postgres";
 
 CREATE TABLE "public"."votes" (
                                   "user_id" int8 NOT NULL,
