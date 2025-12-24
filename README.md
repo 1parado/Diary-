@@ -16,8 +16,11 @@ Diary/
 bash
 编辑
 cd frontend
+
 npm install        # 安装依赖（首次运行必需）
+
 npm run dev        # 启动本地开发服务（默认 http://localhost:5173）
+
 ✅ 前端会自动热重载，修改代码后浏览器将实时更新。
 
 2️⃣ 启动后端
@@ -33,8 +36,11 @@ npm run dev        # 启动本地开发服务（默认 http://localhost:5173）
 
 bash
 编辑
+
 cd backend
+
 mvn clean compile    # 清理并编译（可选）
+
 mvn spring-boot:run  # 启动后端服务（默认 http://localhost:8080）
 
 
@@ -53,6 +59,6 @@ mvn spring-boot:run  # 启动后端服务（默认 http://localhost:8080）
 
 🌟 Happy Coding! —— 你的日记，由你掌控 💖
 
-@Author Paradox
 项目博客介绍——[Diary](https://1parado.github.io/p/diary-%E4%B8%80%E6%AC%BE%E5%A4%9A%E5%8A%9F%E8%83%BD%E6%97%A5%E8%AE%B0%E8%BD%AF%E4%BB%B6/)
+
 B站项目介绍——[Diary-BiliBili](https://www.bilibili.com/video/BV1WtqQB1Evr/?share_source=copy_web&vd_source=e51d3438543fd80d97a3f4ce11e7cdcb)
